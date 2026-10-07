@@ -151,14 +151,14 @@ const MENU_KB = {
 };
 
 const START_TEXT =
-  '👁 <b>OSINT</b> — разведка по открытым данным\n\n' +
+  '🛡 <b>OSINT Check</b> — проверка по открытым данным\n\n' +
   "Просто пришлите запрос, я сам определю тип:\n" +
-  "🔍 <code>durov</code> или <code>@durov</code> — ник по соцсетям\n" +
+  "🔍 <code>durov</code> или <code>@durov</code> — свободен ли ник на площадках\n" +
   "🌐 <code>example.com</code> — домен (регистратор, даты, DNS)\n" +
   "📡 <code>8.8.8.8</code> — IP-адрес (страна, провайдер)\n" +
-  "🕳 <code>mail@example.com</code> — утечки email\n\n" +
+  "🕳 <code>mail@example.com</code> — не утёк ли ваш email\n\n" +
   "Или откройте Mini App 👇\n\n" +
-  "<i>Только публичные источники. Личные данные людей не ищем.</i>";
+  "<i>Инструмент самопроверки: свои аккаунты, домены и утечки паролей.\nТолько публичные источники. Слежка и персональные данные людей не поддерживаются.</i>";
 
 const HINTS = {
   "mode:nick": "🔍 Пришлите ник, например <code>durov</code> — проверю по 7 соцсетям.\n\n⬅️ /start — меню",
@@ -204,7 +204,10 @@ async function main() {
     try {
       const r = await fetch(`${API}/getUpdates?offset=${offset}&timeout=25&allowed_updates=["message","callback_query"]`);
       const j = await r.json();
-      if (!j.ok) { console.error("getUpdates:", j.description); break; }
+      if (!j.ok) {
+        if (j.error_code === 409) { await new Promise((r2) => setTimeout(r2, 2000)); continue; } // очередь занята старым воркером — держим осаду
+        console.error("getUpdates:", j.description); break;
+      }
       updates = j.result;
     } catch (e) { console.error("poll:", e.message); break; }
     for (const u of updates) {
