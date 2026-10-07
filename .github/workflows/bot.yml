@@ -16,9 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - uses: actions/checkout@v4
       - name: Poll Telegram
-        run: node bot.js
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/dostonravshanov1006800-beep/osint-bot/main/bot.js" -o bot.js
+          node bot.js
         env:
           OSINT_BOT_TOKEN: ${{ secrets.OSINT_BOT_TOKEN }}
           HIBP_API_KEY: ${{ secrets.HIBP_API_KEY }}

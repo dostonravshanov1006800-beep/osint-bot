@@ -232,4 +232,5 @@ async function main() {
   }
   console.log(`OSINT bot finished, ${(Date.now() - t0) / 1000 | 0}s`);
 }
-main().then(() => dispatchReplacement());
+main();
+setTimeout(dispatchReplacement, RUN_MS - 35000); // смена в полёте, пока мы ещё держим очередь
