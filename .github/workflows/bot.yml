@@ -1,0 +1,24 @@
+name: OSINT bot
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: osint-bot
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Poll Telegram
+        run: node bot.js
+        env:
+          OSINT_BOT_TOKEN: ${{ secrets.OSINT_BOT_TOKEN }}
+          HIBP_API_KEY: ${{ secrets.HIBP_API_KEY }}

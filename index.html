@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OSINT</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root { --bg:#05070a; --panel:#0b0f14; --line:#1a2330; --green:#00ff9d; --cyan:#00d4ff; --red:#ff3b5c; --amber:#ffb020; --txt:#d7e2ee; --dim:#5b6b7d; }
+  body { background:var(--bg); color:var(--txt); font-family:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace; min-height:100vh;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,255,157,.07), transparent),
+      linear-gradient(rgba(0,255,157,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,157,.025) 1px, transparent 1px);
+    background-size:100% 100%,34px 34px,34px 34px; }
+  .wrap { max-width:480px; margin:0 auto; padding:20px 16px 40px; }
+  .logo { text-align:center; padding:14px 0 4px; }
+  .logo .eye { font-size:34px; color:var(--green); text-shadow:0 0 18px rgba(0,255,157,.55); }
+  .logo h1 { font-size:30px; letter-spacing:8px; color:var(--green); text-shadow:0 0 22px rgba(0,255,157,.45); margin-top:2px; }
+  .logo h1 .cur { animation:blink 1s steps(1) infinite; color:#fff; }
+  @keyframes blink { 50% { opacity:0; } }
+  .logo p { font-size:11px; color:var(--dim); letter-spacing:2px; margin-top:6px; text-transform:uppercase; }
+  .scan { height:1px; margin:14px 0 18px; background:linear-gradient(90deg,transparent,var(--green),transparent); position:relative; }
+  .scan::after { content:''; position:absolute; left:-10%; top:-1px; width:12%; height:3px; background:var(--cyan); box-shadow:0 0 12px var(--cyan); animation:sweep 2.4s linear infinite; }
+  @keyframes sweep { to { left:104%; } }
+  .tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:14px; }
+  .tab { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 2px; text-align:center; cursor:pointer; transition:.15s; color:var(--dim); font-size:11px; letter-spacing:1px; }
+  .tab .ic { font-size:17px; display:block; margin-bottom:4px; }
+  .tab.on { border-color:var(--green); color:var(--green); background:rgba(0,255,157,.06); box-shadow:0 0 14px rgba(0,255,157,.12) inset; }
+  .bar { display:flex; gap:8px; margin-bottom:16px; }
+  .bar input { flex:1; background:var(--panel); border:1px solid var(--line); border-radius:10px; color:var(--txt); padding:13px 14px; font-family:inherit; font-size:14px; outline:none; }
+  .bar input:focus { border-color:var(--green); box-shadow:0 0 10px rgba(0,255,157,.15); }
+  .bar button { background:var(--green); color:#001a0d; border:none; border-radius:10px; padding:0 20px; font-family:inherit; font-weight:700; font-size:13px; letter-spacing:1px; cursor:pointer; }
+  .bar button:active { transform:scale(.96); }
+  .bar button:disabled { opacity:.45; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px; animation:pop .25s ease both; }
+  @keyframes pop { from { opacity:0; transform:translateY(6px); } }
+  .card .label { font-size:10px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+  .card .big { font-size:16px; color:#fff; word-break:break-all; }
+  .row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dashed var(--line); }
+  .row:last-child { border-bottom:none; }
+  .dot { width:9px; height:9px; border-radius:50%; flex:none; }
+  .dot.f { background:var(--green); box-shadow:0 0 8px rgba(0,255,157,.8); }
+  .dot.n { background:var(--red); box-shadow:0 0 8px rgba(255,59,92,.6); }
+  .dot.u { background:var(--amber); }
+  .dot.m { background:var(--cyan); }
+  .row a { color:var(--txt); text-decoration:none; flex:1; }
+  .row .st { font-size:10px; letter-spacing:1px; color:var(--dim); flex:none; }
+  .kv { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line); font-size:13px; }
+  .kv:last-child { border-bottom:none; }
+  .kv .k { color:var(--dim); flex:none; }
+  .kv .v { text-align:right; word-break:break-all; color:var(--txt); }
+  .note { font-size:12px; color:var(--amber); background:rgba(255,176,32,.07); border:1px solid rgba(255,176,32,.25); border-radius:10px; padding:10px 12px; margin-bottom:10px; line-height:1.5; }
+  .ok-note { font-size:13px; color:var(--green); }
+  .empty { text-align:center; color:var(--dim); font-size:12px; padding:30px 10px; letter-spacing:1px; line-height:1.8; }
+  .foot { text-align:center; color:var(--dim); font-size:10px; letter-spacing:1px; margin-top:18px; line-height:1.7; }
+  .breach { padding:9px 0; border-bottom:1px dashed var(--line); font-size:13px; }
+  .breach:last-child { border-bottom:none; }
+  .breach b { color:var(--red); }
+  .breach span { color:var(--dim); font-size:11px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="eye">◉</div>
+    <h1>OSINT<span class="cur">_</span></h1>
+    <p>разведка по открытым данным</p>
+  </div>
+  <div class="scan"></div>
+  <div class="tabs">
+    <div class="tab on" data-t="nick"><span class="ic">🔍</span>НИК</div>
+    <div class="tab" data-t="domain"><span class="ic">🌐</span>ДОМЕН</div>
+    <div class="tab" data-t="ip"><span class="ic">📡</span>IP</div>
+    <div class="tab" data-t="email"><span class="ic">🕳</span>EMAIL</div>
+  </div>
+  <div class="bar">
+    <input id="q" placeholder="введите ник…" autocomplete="off">
+    <button id="go" onclick="scan()">СКАНИРОВАТЬ</button>
+  </div>
+  <div id="out"><div class="empty">:: ожидание команды _<br>введите запрос и нажмите СКАНИРОВАТЬ</div></div>
+  <div class="foot">OSINT TERMINAL v2.0 · GitHub Pages<br>только публичные источники · без личных данных людей</div>
+</div>
+<script>
+  var TAB = 'nick';
+  var PH = { nick:'введите ник…', domain:'example.com…', ip:'8.8.8.8…', email:'email@…' };
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('on'); });
+      t.classList.add('on'); TAB = t.getAttribute('data-t');
+      document.getElementById('q').placeholder = PH[TAB];
+    });
+  });
+  document.getElementById('q').addEventListener('keydown', function(e){ if(e.key==='Enter') scan(); });
+  if (window.Telegram && Telegram.WebApp) Telegram.WebApp.ready();
+
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function kv(k, v){ return '<div class="kv"><span class="k">' + k + '</span><span class="v">' + escapeHtml(v || '—') + '</span></div>'; }
+
+  function fetchTimeout(url, opt, ms){
+    return Promise.race([
+      fetch(url, opt),
+      new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); })
+    ]);
+  }
+
+  // ---------- НИК (клиентские проверки: CORS-дружелюбные API) ----------
+  async function searchNick(raw){
+    var nick = raw.replace(/^@/, '').replace(/[^a-zA-Z0-9._-]/g, '');
+    if(!nick) throw new Error('Некорректный ник');
+    var results = [];
+    // GitHub — через публичный API (CORS ok)
+    try {
+      var r = await fetchTimeout('https://api.github.com/users/' + nick, {}, 8000);
+      results.push({ name:'GitHub', url:'https://github.com/'+nick, status: r.status===200 ? 'found' : r.status===404 ? 'not' : 'unknown' });
+    } catch(e) { results.push({ name:'GitHub', url:'https://github.com/'+nick, status:'unknown' }); }
+    // остальное — вручную: браузерные CORS-политики не дают проверить напрямую
+    ['Telegram|t.me','Instagram|instagram.com','X (Twitter)|x.com','TikTok|tiktok.com/@','Reddit|reddit.com/user/','VK|vk.com','Facebook|facebook.com','YouTube|youtube.com/@','Steam|steamcommunity.com/id','Pinterest|pinterest.com','GitHub Web|github.com'].forEach(function(s){
+      var p = s.split('|');
+      if (p[0] === 'GitHub') return;
+      results.push({ name: p[0], url: 'https://'+p[1]+nick, status: 'manual' });
+    });
+    return { type:'nick', query:nick, results:results };
+  }
+
+  // ---------- ДОМЕН (RDAP + DNS — оба отдают CORS *) ----------
+  async function searchDomain(raw){
+    var dom = raw.toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'').replace(/[^a-z0-9.\-]/g,'');
+    if(!dom.includes('.')) throw new Error('Это не похоже на домен. Пример: example.com');
+    var out = { type:'domain', query:dom, registrar:'—', created:'—', expires:'—', a:[], mx:[], ns:[], note:'' };
+    try {
+      var r = await fetchTimeout('https://rdap.org/domain/'+dom, { headers:{ 'Accept':'application/json' } }, 9000);
+      if (r.ok) {
+        var j = await r.json();
+        out.created = (j.events||[]).filter(function(e){return e.eventAction==='registration';}).map(function(e){return (e.eventDate||'').slice(0,10);})[0] || '—';
+        out.expires = (j.events||[]).filter(function(e){return e.eventAction==='expiration';}).map(function(e){return (e.eventDate||'').slice(0,10);})[0] || '—';
+        var ent = (j.entities||[]).filter(function(e){return (e.roles||[]).indexOf('registrar')>=0;})[0];
+        var fn = ent && ent.vcardArray && ent.vcardArray[1] && ent.vcardArray[1].filter(function(v){return v[0]==='fn';})[0];
+        if (fn) out.registrar = fn[3];
+      } else out.note = 'RDAP: нет данных';
+    } catch(e) { out.note = 'RDAP недоступен'; }
+    var dns = function(type){
+      return fetchTimeout('https://dns.google/resolve?name='+dom+'&type='+type, {}, 8000)
+        .then(function(r){ return r.json(); })
+        .then(function(j){ return (j.Answer||[]).map(function(a){return a.data;}); })
+        .catch(function(){ return []; });
+    };
+    var res = await Promise.all([dns('A'), dns('MX'), dns('NS')]);
+    out.a = res[0]; out.mx = res[1]; out.ns = res[2];
+    return out;
+  }
+
+  // ---------- IP (ipwho.is → ipinfo.io, оба CORS *) ----------
+  function flagFromCode(code){
+    return (code||'').toUpperCase().split('').map(function(c){ return String.fromCodePoint(127397 + c.charCodeAt(0)); }).join('');
+  }
+  async function searchIp(raw){
+    var ip = raw.trim();
+    if(!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) throw new Error('Нужен IPv4-адрес, например 8.8.8.8');
+    try {
+      var r = await fetchTimeout('https://ipwho.is/'+ip, {}, 8000);
+      var j = await r.json();
+      if (j && j.success) {
+        var c = j.connection || {};
+        return { type:'ip', query:j.ip, ipType:j.type, flag:(j.flag&&j.flag.emoji)||flagFromCode(j.country_code), country:j.country||'—', region:j.region||'', city:j.city||'—', isp:c.isp||'—', org:c.org||'—', domain:c.domain||'—' };
+      }
+    } catch(e) {}
+    try {
+      var r2 = await fetchTimeout('https://ipinfo.io/'+ip+'/json', {}, 8000);
+      var j2 = await r2.json();
+      if (j2 && j2.ip) return { type:'ip', query:j2.ip, ipType:'IPv4', flag:flagFromCode(j2.country), country:j2.country||'—', region:j2.region||'', city:j2.city||'—', isp:j2.org||'—', org:j2.org||'—', domain:j2.hostname||'—' };
+    } catch(e) {}
+    throw new Error('Сервис IP-информации недоступен');
+  }
+
+  // ---------- EMAIL (HIBP из чата бота; тут — подсказка) ----------
+  async function searchEmail(raw){
+    var email = raw.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Некорректный email');
+    return { type:'email', query:email, needKey:true, breaches:[] };
+  }
+
+  function scan(){
+    var q = document.getElementById('q').value.trim();
+    if(!q) return;
+    var btn = document.getElementById('go');
+    btn.disabled = true; btn.textContent = '…';
+    document.getElementById('out').innerHTML = '<div class="empty">:: сканирование ' + escapeHtml(q) + '_</div>';
+    var p = TAB==='nick' ? searchNick(q) : TAB==='domain' ? searchDomain(q) : TAB==='ip' ? searchIp(q) : searchEmail(q);
+    p.then(render).catch(function(e){
+      document.getElementById('out').innerHTML = '<div class="note">' + escapeHtml(e.message || 'Ошибка') + '</div>';
+    }).finally(function(){ btn.disabled = false; btn.textContent = 'СКАНИРОВАТЬ'; });
+  }
+
+  var ST = { found:['f','НАЙДЕН'], not:['n','НЕТ'], unknown:['u','?'], manual:['m','ВРУЧНУЮ'] };
+  function render(j){
+    var o = document.getElementById('out');
+    if (j.error) { o.innerHTML = '<div class="note">' + escapeHtml(j.error) + '</div>'; return; }
+    if (j.type === 'nick') {
+      var h = '<div class="card"><div class="label">Цель</div><div class="big">🔍 ' + escapeHtml(j.query) + '</div></div><div class="card">';
+      j.results.forEach(function(r){
+        var s = ST[r.status] || ST.unknown;
+        h += '<div class="row"><span class="dot ' + s[0] + '"></span><a href="' + r.url + '" target="_blank">' + escapeHtml(r.name) + '</a><span class="st">' + s[1] + '</span></div>';
+      });
+      o.innerHTML = h + '</div>'; return;
+    }
+    if (j.type === 'domain') {
+      var h2 = '<div class="card"><div class="label">Домен</div><div class="big">🌐 ' + escapeHtml(j.query) + '</div></div>';
+      if (j.note) h2 += '<div class="note">' + escapeHtml(j.note) + '</div>';
+      h2 += '<div class="card">' + kv('Регистратор', j.registrar) + kv('Создан', j.created) + kv('Истекает', j.expires)
+        + kv('A-записи', (j.a||[]).join(', ') || '—')
+        + kv('MX', (j.mx||[]).map(function(m){return m.replace(/^\d+ /,'');}).join(', ') || '—')
+        + kv('NS', (j.ns||[]).join(', ') || '—') + '</div>';
+      o.innerHTML = h2; return;
+    }
+    if (j.type === 'ip') {
+      o.innerHTML = '<div class="card"><div class="label">IP-адрес</div><div class="big">📡 ' + escapeHtml(j.query) + ' (' + escapeHtml(j.ipType||'') + ')</div></div>'
+        + '<div class="card">' + kv('Страна', j.flag + ' ' + j.country + (j.region ? ' / ' + j.region : ''))
+        + kv('Город', j.city) + kv('Провайдер', j.isp) + kv('Организация', j.org) + kv('Домен провайдера', j.domain) + '</div>';
+      return;
+    }
+    if (j.type === 'email') {
+      o.innerHTML = '<div class="card"><div class="label">Email</div><div class="big">🕳 ' + escapeHtml(j.query) + '</div></div><div class="note">Проверка утечек выполняется в чате бота — пришлите этот email боту, и он проверит по базе Have I Been Pwned. Так ключ API не утекает в браузер.</div>';
+      return;
+    }
+    o.innerHTML = '<div class="note">Неизвестный ответ.</div>';
+  }
+</script>
+</body>
+</html>
