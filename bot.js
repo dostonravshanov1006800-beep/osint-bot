@@ -194,6 +194,20 @@ async function handleUpdate(u) {
   } catch (e) { console.error("handle:", e.message); }
 }
 
+async function dispatchReplacement() {
+  // эстафета: запускаем себе замену, чтобы очередь никогда не отпускалась (cancel-in-progress сменит нас)
+  const ghToken = process.env.GITHUB_TOKEN;
+  if (!ghToken) return;
+  try {
+    const r = await fetch("https://api.github.com/repos/dostonravshanov1006800-beep/osint-bot/actions/workflows/bot.yml/dispatches", {
+      method: "POST",
+      headers: { "Authorization": `token ${ghToken}`, "Accept": "application/vnd.github+json" },
+      body: JSON.stringify({ ref: "main" }),
+    });
+    console.log("replacement dispatched:", r.status);
+  } catch (e) { console.error("dispatch err:", e.message); }
+}
+
 async function main() {
   if (!TOKEN) { console.error("Нет OSINT_BOT_TOKEN"); return; }
   console.log(`OSINT bot started ${new Date().toISOString()}`);
@@ -218,4 +232,4 @@ async function main() {
   }
   console.log(`OSINT bot finished, ${(Date.now() - t0) / 1000 | 0}s`);
 }
-main();
+main().then(() => dispatchReplacement());

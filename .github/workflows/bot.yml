@@ -4,9 +4,12 @@ on:
     - cron: '*/5 * * * *'
   workflow_dispatch:
 
+permissions:
+  actions: write
+
 concurrency:
   group: osint-bot
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   bot:
@@ -14,11 +17,9 @@ jobs:
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
       - name: Poll Telegram
         run: node bot.js
         env:
           OSINT_BOT_TOKEN: ${{ secrets.OSINT_BOT_TOKEN }}
           HIBP_API_KEY: ${{ secrets.HIBP_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
